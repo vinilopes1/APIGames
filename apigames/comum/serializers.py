@@ -1,20 +1,65 @@
 from rest_framework import serializers
 from .models import *
 
-class GameSerializer(serializers.HyperlinkedModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.user.username')
-    game_category = serializers.SlugRelatedField(queryset=GameCategory.objects.all(),
-                             slug_field='name')
+class GameCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameCategory
+        fields = (
+            'id',
+            'name',
+            'description',
+        )
+
+class PlayerGameSerializer(serializers.HyperlinkedModelSerializer):
+
+
+    class Meta:
+        model = Game
+        fields = ('url','name')
+
+class PlayerSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(queryset=User.objects.all(), slug_field='username')
+    first_name = serializers.CharField(write_only=False, read_only=True)
+    last_name = serializers.CharField(write_only=False, read_only=True)
+    games = PlayerGameSerializer(many=True,read_only=True)
+
+    class Meta:
+        model = Player
+        fields = (
+            'url',
+            'id',
+            'first_name',
+            'last_name',
+            'telefone',
+            'gender',
+            'user',
+            'games',
+            'qtd_games'
+        )
+
+
+
+class GameSerializer(serializers.ModelSerializer):
+
+    # game_category = serializers.SlugRelatedField(queryset=GameCategory.objects.all(),
+    #                          slug_field='name')
+    #owner = PlayerSerializer()
 
     class Meta:
         model = Game
         fields = (
             'url',
             'id',
+            'name_category',
             'game_category',
             'name',
-            'owner',
+            #'owner',
+            'name_owner',
             'release_date',)
+
+        read_only_fields = ('release_date','game_category' )
+
+        #extra_kwargs = {'game_category':{'write_only': True}}
 
 
 class ScoreSerializer(serializers.HyperlinkedModelSerializer):
@@ -34,20 +79,17 @@ class ScoreSerializer(serializers.HyperlinkedModelSerializer):
 
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    # games = PlayerGameSerializer(many=True, read_only=True)
+class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = ('url', 'id', 'username', 'password', 'first_name', 'last_name', 'player')
 
+        read_only_fields = ('player', )
 
-class PlayerGameSerializer(serializers.HyperlinkedModelSerializer):
 
 
-    class Meta:
-        model = Game
-        fields = ('url','name')
+
 
 # class PlayerUserSerializer(serializers.HyperlinkedModelSerializer):
 #
@@ -57,33 +99,7 @@ class PlayerGameSerializer(serializers.HyperlinkedModelSerializer):
 #         fields = ('url','username','first_name','last_name')
 
 
-class PlayerSerializer(serializers.HyperlinkedModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
-    first_name = serializers.CharField(write_only=False, read_only=True)
-    last_name = serializers.CharField(write_only=False, read_only=True)
-    #games = PlayerGameSerializer(many=True,read_only=True)
 
-    class Meta:
-        model = Player
-        fields = (
-            'url',
-            'id',
-            'first_name',
-            'last_name',
-            'telefone',
-            'gender',
-            'user',
-        )
-
-
-class GameCategorySerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = GameCategory
-        fields = (
-            'url',
-            'name',
-            'description',
-        )
 
 
 

@@ -8,20 +8,21 @@ from .permissions import *
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 
-class DefaultMixin(object):
+# class DefaultMixin(object):
+#
+#     authentication_classes = (
+#         authentication.BasicAuthentication,
+#         authentication.TokenAuthentication,
+#     )
+#
+#     permission_classes = (
+#        permissions.IsAuthenticated,
+#
+#     )
 
-    authentication_classes = (
-        authentication.BasicAuthentication,
-        authentication.TokenAuthentication,
-    )
-
-    permission_classes = (
-       permissions.IsAuthenticated,
-    )
 
 
-
-class ApiRoot(DefaultMixin,generics.GenericAPIView):
+class ApiRoot(generics.GenericAPIView):
     name = 'api-root'
     def get(self, request, *args, **kwargs):
         return Response({
@@ -38,57 +39,56 @@ class ApiRoot(DefaultMixin,generics.GenericAPIView):
 
         })
 
-class GameCategoryList(DefaultMixin, generics.ListCreateAPIView):
+class GameCategoryList(generics.ListCreateAPIView):
     queryset = GameCategory.objects.all()
     serializer_class = GameCategorySerializer
     name = 'gamecategory-list'
 
 
-class GameCategoryDetail(DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
+class GameCategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = GameCategory.objects.all()
     serializer_class = GameCategorySerializer
     name = 'gamecategory-detail'
 
 
-class GameList(DefaultMixin, generics.ListCreateAPIView):
+class GameList(generics.ListCreateAPIView):
     queryset = Game.objects.all()
     serializer_class = GameSerializer
     name = 'game-list'
-    permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
-        IsOwnerOrReadOnly
-    )
+
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user.player)
+        games = GameCategory.objects.all()
+        serializer.save(owner=User.objects.get(pk=6).player,
+                        game_category=games[0])
 
 
-class GameDetail(DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
+class GameDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Game.objects.all()
     serializer_class = GameSerializer
     name = 'game-detail'
 
-    permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
-        IsOwnerOrReadOnly
-    )
+    # permission_classes = (
+    #     permissions.IsAuthenticatedOrReadOnly,
+    #     IsOwnerOrReadOnly
+    # )
 
 
-class PlayerList(DefaultMixin, generics.ListCreateAPIView):
+class PlayerList(generics.ListCreateAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
     name = 'player-list'
 
-    def perform_create(self, serializer):
-        usuario = User.objects.get(username=self.request.data['user'])
-        player = Player(created=timezone.now(),
-                        telefone=self.request.data['telefone'],
-                        gender=self.request.data['gender'],
-                        user_id=usuario.id,
-                        first_name=usuario.first_name,
-                        last_name=usuario.last_name
-                        )
-        player.save()
-        serializer.save(player=player)
+    # def perform_create(self, serializer):
+    #     usuario = User.objects.get(username=self.request.data['user'])
+    #     player = Player(created=timezone.now(),
+    #                     telefone=self.request.data['telefone'],
+    #                     gender=self.request.data['gender'],
+    #                     user_id=usuario.id,
+    #                     first_name=usuario.first_name,
+    #                     last_name=usuario.last_name
+    #                     )
+    #     player.save()
+        #serializer.save(player=player)
 
     # def perform_create(self, serializer):
     #     senha = make_password("%s" % self.request.data['password'])
@@ -107,31 +107,59 @@ class PlayerList(DefaultMixin, generics.ListCreateAPIView):
     #     serializer.save(user=usuario)
 
 
-class PlayerDetail(DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
+class PlayerDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
     name = 'player-detail'
 
 
-class ScoreList(DefaultMixin, generics.ListCreateAPIView):
+class ScoreList(generics.ListCreateAPIView):
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
     name = 'score-list'
 
 
-class ScoreDetail(DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
+class ScoreDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
     name = 'score-detail'
 
 
-class UserList(DefaultMixin, generics.ListCreateAPIView):
+class UserList(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     name = 'user-list'
 
+    def perform_create(self, serializer):
+        senha = make_password("%s" % self.request.data['password'])
 
-class UserDetail(DefaultMixin, generics.RetrieveAPIView):
+        serializer.save(username=self.request.data['username'],
+                     first_name=self.request.data['first_name'],
+                     last_name=self.request.data['last_name'],
+                     password=senha,
+                     last_login=timezone.now(),
+                     is_superuser=False,
+                     is_staff=True,
+                     is_active=True,
+                     date_joined=timezone.now())
+
+        usuario_criado = User.objects.get(username=self.request.data['username'])
+        player = Player(created=timezone.now(),
+                        telefone=None,
+                        gender=None,
+                        user_id=usuario_criado.id,
+                        first_name=usuario_criado.first_name,
+                        last_name=usuario_criado.last_name)
+
+        player.save()
+        print("Salvou Player")
+
+
+
+
+
+class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     name = 'user-detail'
+

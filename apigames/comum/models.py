@@ -15,8 +15,8 @@ class Player(models.Model):
     first_name = models.CharField(max_length=100, blank=False)
     last_name = models.CharField(max_length=255, blank=False)
     # email = models.CharField(max_length=100)
-    telefone = models.CharField(max_length=20)
-    gender = models.CharField(max_length=2, choices=GENDER_CHOICES, default=MALE,)
+    telefone = models.CharField(max_length=20,null=True)
+    gender = models.CharField(max_length=2, choices=GENDER_CHOICES, default=MALE, null=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='player')
 
     class Meta:
@@ -24,6 +24,10 @@ class Player(models.Model):
 
     def __str__(self):
         return ("%s %s")%(self.first_name,self.last_name)
+
+    def qtd_games(self):
+        return self.games.all().count()
+
 
 
 
@@ -33,10 +37,16 @@ class Game(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=200)
     game_category = models.ForeignKey('GameCategory',on_delete=models.CASCADE, related_name='games')
-    release_date = models.DateTimeField()
+    release_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ('name',)
+
+    def name_category(self):
+        return self.game_category.name
+
+    def name_owner(self):
+        return "José Vinícius"
 
     def __str__(self):
         return self.name
